@@ -146,10 +146,7 @@ async def monitor_perps():
         except Exception as e:
             print(f"Ошибка мониторинга: {e}")
         
-        for remaining in range(CHECK_INTERVAL, 0, -1):
-            print(f"До следующей проверки осталось: {remaining} секунд", end='\r')
-            await asyncio.sleep(1)
-        print()  # Для переноса строки после окончания отсчёта
+        await asyncio.sleep(CHECK_INTERVAL)
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
