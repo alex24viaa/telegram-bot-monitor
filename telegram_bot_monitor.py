@@ -2,6 +2,7 @@ import time
 import asyncio
 import ssl
 import os
+from aiohttp import web
 
 try:
     from selenium import webdriver
@@ -119,35 +120,32 @@ def fetch_perps_positions(url):
     return positions
 
 async def monitor_perps():
-    """Асинхронный мониторинг позиций с двух страниц."""
     sent_positions_1 = load_sent_positions(POSITIONS_FILE_1)
     sent_positions_2 = load_sent_positions(POSITIONS_FILE_2)
-    
-    while True:
-        try:
-            current_positions_1 = fetch_perps_positions(URL_1)
-            new_positions_1 = current_positions_1 - sent_positions_1
-            if new_positions_1:
-                await send_telegram_message(f"Новые позиции ([Кошелек 1]({URL_1})): {', '.join(new_positions_1)}")
-                sent_positions_1.update(new_positions_1)
-                save_sent_positions(POSITIONS_FILE_1, sent_positions_1)
-            else:
-                print("Нет новых позиций для Кошелька 1")
-            
-            current_positions_2 = fetch_perps_positions(URL_2)
-            new_positions_2 = current_positions_2 - sent_positions_2
-            if new_positions_2:
-                await send_telegram_message(f"Новые позиции ([Кошелек 2]({URL_2})): {', '.join(new_positions_2)}")
-                sent_positions_2.update(new_positions_2)
-                save_sent_positions(POSITIONS_FILE_2, sent_positions_2)
-            else:
-                print("Нет новых позиций для Кошелька 2")
 
-        except Exception as e:
-            print(f"Ошибка мониторинга: {e}")
-        
+    while True:
+        current_positions_1 = fetch_perps_positions(URL_1)
+        new_positions_1 = current_positions_1 - sent_positions_1
+        if new_positions_1:
+            await send_telegram_message(f"Новые позиции ([Кошелек 1]({URL_1})): {', '.join(new_positions_1)}")
+            sent_positions_1.update(new_positions_1)
+            save_sent_positions(POSITIONS_FILE_1, sent_positions_1)
+
+        current_positions_2 = fetch_perps_positions(URL_2)
+        new_positions_2 = current_positions_2 - sent_positions_2
+        if new_positions_2:
+            await send_telegram_message(f"Новые позиции ([Кошелек 2]({URL_2})): {', '.join(new_positions_2)}")
+            sent_positions_2.update(new_positions_2)
+            save_sent_positions(POSITIONS_FILE_2, sent_positions_2)
+
         await asyncio.sleep(CHECK_INTERVAL)
 
+async def handle(request):
+    return web.Response(text="Bot is running")
+
 if __name__ == "__main__":
+    app = web.Application()
+    app.router.add_get('/', handle)
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(monitor_perps())
+    loop.create_task(monitor_perps())
+    web.run_app(app, port=int(os.getenv('PORT', 10000)))
