@@ -52,6 +52,7 @@ if Bot:
 
 ssl._create_default_https_context = ssl._create_unverified_context
 options = Options()
+options.binary_location = "/usr/bin/chromium"
 options.add_argument("--disable-software-rasterizer")
 options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-gpu")
@@ -160,3 +161,4 @@ if __name__ == "__main__":
         asyncio.run(start_app())
     except Exception as e:
         print(f"Ошибка при запуске: {e}")
+
